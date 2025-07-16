@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h2>Retrain Status</h2>
+  <p>Status: <strong>{{ status }}</strong></p>
+  {% if status == "SUCCESS" %}
+    <h3>Logs:</h3>
+    <pre>{{ result.stdout }}</pre>
+    <pre style="color:red;">{{ result.stderr }}</pre>
+    <div>Return code: {{ result.returncode }}</div>
+  {% elif status == "FAILURE" %}
+    <h3 style="color:red;">Task failed!</h3>
+    <pre>{{ result }}</pre>
+  {% else %}
+    <p>Retraining in progress... (refresh to update)</p>
+  {% endif %}
+  <a href="/admin/accounts/mlmodel/">Back to Model List</a>
+{% endblock %}

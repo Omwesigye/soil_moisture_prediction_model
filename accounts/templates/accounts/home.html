@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Detection - Home</title>
+    <style>
+        body { background: #f4f1ee url('{% static "images/pexels-airin-party-252379-767240.jpg" %}') no-repeat center center fixed; background-size: cover; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .navbar { display: flex; align-items: center; justify-content: center; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .navbar .project-name { color: #fff; font-size: 2.2em; font-weight: bold; letter-spacing: 1px; text-align: center; width: 100%; }
+        .container { background: rgba(255,255,255,0.92); max-width: 600px; margin: 120px auto; padding: 2rem 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); text-align: center; }
+        h1 { color: #4e3d1c; margin-bottom: 0.5em; font-size: 2.5em; }
+        p { color: #6b5e3c; }
+        .btn { display: inline-block; margin: 1em 0.5em 0 0.5em; padding: 0.7em 2em; background: #7bb661; color: #fff; border: none; border-radius: 6px; font-size: 1.1em; text-decoration: none; transition: background 0.2s; }
+        .btn:hover { background: #5e944c; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="project-name">Soil Moisture Detector</span>
+    </nav>
+    <div class="container">
+        <h1>Welcome to SOIL MOISTURE Detection</h1>
+        <p>Empowering farmers with smart soil insights.<br>Login or register to get started!</p>
+        <a href="{% url 'login' %}" class="btn">Login</a>
+        <a href="{% url 'register' %}" class="btn">Register</a>
+    </div>
+</body>
+</html> 

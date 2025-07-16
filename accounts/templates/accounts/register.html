@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Soil Detection</title>
+    <style>
+        body { background: #f4f1ee; font-family: 'Segoe UI', sans-serif; }
+        .container { background: #fff; max-width: 400px; margin: 60px auto; padding: 2rem 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
+        h2 { color: #4e3d1c; text-align: center; }
+        form { display: flex; flex-direction: column; }
+        label { margin-top: 1em; color: #6b5e3c; }
+        input { padding: 0.7em; border: 1px solid #bdbdbd; border-radius: 6px; margin-top: 0.3em; }
+        button { margin-top: 1.5em; padding: 0.7em; background: #7bb661; color: #fff; border: none; border-radius: 6px; font-size: 1.1em; cursor: pointer; }
+        button:hover { background: #5e944c; }
+        .login-link { text-align: center; margin-top: 1em; }
+        .login-link a { color: #7bb661; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+        .errorlist { color: #b94a48; margin: 0.5em 0 0 0; list-style: none; padding: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.telno.label_tag }}
+            {{ form.telno }}
+            {{ form.location.label_tag }}
+            {{ form.location }}
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            <button type="submit">Register</button>
+        </form>
+        <script>
+            // Remove JS for role/location logic
+        </script>
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login</a>
+        </div>
+    </div>
+</body>
+</html> 

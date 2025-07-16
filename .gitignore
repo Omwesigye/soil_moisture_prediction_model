@@ -1,0 +1,14 @@
+# Ignore virtual environment
+env/
+
+# Ignore model files
+*.keras
+*.pkl
+*.h5
+*.doc
+
+# Other common files to ignore
+__pycache__/
+*.pyc
+*.log
+.DS_Store

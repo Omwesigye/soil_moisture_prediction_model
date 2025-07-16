@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction History</title>
+    <style>
+        body { background: #f4f1ee; font-family: 'Segoe UI', sans-serif; }
+        .container { background: #fff; max-width: 1100px; margin: 60px auto; padding: 2rem 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
+        h2 { color: #4e3d1c; text-align: center; }
+        .history-table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 1em; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .history-table th, .history-table td { border: 1px solid #e0e0e0; padding: 10px 14px; text-align: center; }
+        .history-table th { background: #7bb661; color: #fff; font-weight: bold; }
+        .history-table tr:nth-child(even) { background: #f4f1ee; }
+        .actions { text-align: center; margin-bottom: 2em; }
+        .btn { display: inline-block; margin: 0 0.5em; padding: 0.7em 2em; background: #7bb661; color: #fff; border: none; border-radius: 6px; font-size: 1.1em; text-decoration: none; transition: background 0.2s; }
+        .btn:hover { background: #5e944c; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">
+            <img src="https://img.icons8.com/ios-filled/50/7bb661/plant-under-sun.png" alt="Logo" class="logo" />
+            <span class="project-name">Soil Moisture Detector</span>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">Home</a>
+            <a href="{% url 'predict_soil' %}">Predict</a>
+            <a href="{% url 'prediction_history' %}">History</a>
+            <a href="{% url 'analytics' %}">Analytics</a>
+            <div class="dropdown" id="accountDropdown" style="display:inline-block; position:relative;">
+                <a href="#" class="dropbtn" id="accountDropbtn" style="color:#fff; cursor:pointer;">Account</a>
+                <div class="dropdown-content" id="accountDropdownContent" style="display:none; position:absolute; background:#fff; min-width:120px; box-shadow:0 8px 16px rgba(0,0,0,0.15); z-index:1; right:0; border-radius:6px;">
+                    <a href="{% url 'profile' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Profile</a>
+                    <a href="{% url 'logout' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Logout</a>
+                </div>
+            </div>
+        </div>
+        <style>
+            .navbar { display: flex; align-items: center; justify-content: space-between; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+            .navbar .brand { display: flex; align-items: center; }
+            .navbar .logo { width: 36px; height: 36px; margin-right: 0.7em; }
+            .navbar .project-name { color: #fff; font-size: 1.3em; font-weight: bold; letter-spacing: 1px; }
+            .navbar .nav-links a { color: #fff; margin-left: 1.5em; text-decoration: none; font-size: 1em; transition: text-decoration 0.2s; }
+            .navbar .nav-links a:hover { text-decoration: underline; }
+            .dropdown { display: inline-block; position: relative; }
+            .dropbtn { color: #fff; cursor: pointer; padding: 0.5em 1.2em; border: none; background: none; font-size: 1em; font-family: inherit; border-radius: 6px; transition: background 0.2s; outline: none; position: relative; }
+            .dropbtn:after { content: '\25BC'; margin-left: 0.5em; font-size: 0.8em; vertical-align: middle; }
+            .dropbtn.active, .dropbtn:focus { background: #6ea04b; }
+            .dropdown-content { display: none; position: absolute; right: 0; top: 120%; background: #fff; min-width: 150px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); border-radius: 10px; z-index: 10; padding: 0.5em 0; animation: fadeIn 0.2s; }
+            .dropdown-content a { color: #4e3d1c; padding: 12px 22px; display: block; text-decoration: none; font-size: 1em; border: none; background: none; transition: background 0.18s, color 0.18s; border-radius: 6px; margin: 0 8px; }
+            .dropdown-content a:hover { background: #f4f1ee; color: #7bb661; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var dropbtn = document.getElementById('accountDropbtn');
+                var dropdown = document.getElementById('accountDropdownContent');
+                dropbtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var isOpen = dropdown.style.display === 'block';
+                    dropdown.style.display = isOpen ? 'none' : 'block';
+                    dropbtn.classList.toggle('active', !isOpen);
+                });
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('#accountDropdown')) {
+                        dropdown.style.display = 'none';
+                        dropbtn.classList.remove('active');
+                    }
+                });
+            });
+        </script>
+    </nav>
+    <div class="container">
+        <h2>Your Prediction History</h2>
+        <form method="get" style="margin-bottom:2em; display:flex; flex-wrap:wrap; gap:1.5em; align-items:center; justify-content:center; background:#f4f1ee; padding:1em 1.5em; border-radius:10px;">
+            <div>
+                <label for="start_date" style="color:#6b5e3c; font-weight:bold;">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date }}" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+            </div>
+            <div>
+                <label for="end_date" style="color:#6b5e3c; font-weight:bold;">End Date:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date }}" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+            </div>
+            <div>
+                <label for="status" style="color:#6b5e3c; font-weight:bold;">Status:</label>
+                <select id="status" name="status" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
+                    {% for s in all_statuses %}
+                        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="recommendation" style="color:#6b5e3c; font-weight:bold;">Recommendation:</label>
+                <select id="recommendation" name="recommendation" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+                    <option value="all" {% if recommendation == 'all' %}selected{% endif %}>All</option>
+                    {% for r in all_recommendations %}
+                        <option value="{{ r }}" {% if recommendation == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="location_encoded" style="color:#6b5e3c; font-weight:bold;">Location Encoded:</label>
+                <select id="location_encoded" name="location_encoded" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+                    <option value="all" {% if location_encoded == 'all' %}selected{% endif %}>All</option>
+                    {% for loc in all_location_encoded %}
+                        <option value="{{ loc }}" {% if location_encoded == loc|stringformat:'s' %}selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn">Filter</button>
+                <a href="{% url 'prediction_history' %}" class="btn" style="background:#b94a48;">Reset</a>
+            </div>
+        </form>
+        
+        {% if records %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Temperature (°C)</th>
+                    <th>Humidity (%)</th>
+                    <th>Battery Voltage</th>
+                    <th>Hour</th>
+                    <th>Day</th>
+                    <th>Month</th>
+                    <th>Weekday</th>
+                    <th>Location</th>
+                    <th>Predicted Moisture</th>
+                    <th>Status</th>
+                    <th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in records %}
+                <tr>
+                    <td>{{ rec.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ rec.temperature_celcius }}</td>
+                    <td>{{ rec.humidity_percent }}</td>
+                    <td>{{ rec.battery_voltage }}</td>
+                    <td>{{ rec.hour }}</td>
+                    <td>{{ rec.day }}</td>
+                    <td>{{ rec.month }}</td>
+                    <td>{{ rec.weekday }}</td>
+                    <td>{{ rec.location_encoded }}</td>
+                    <td>{{ rec.predicted_moisture|floatformat:2 }}</td>
+                    <td>{{ rec.status }}</td>
+                    <td>{{ rec.recommendation }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p style="text-align:center; color:#6b5e3c;">No predictions found.</p>
+        {% endif %}
+    </div>
+    <div class="actions">
+            <a href="{% url 'dashboard' %}" class="btn">Back to Dashboard</a>
+            <a href="{% url 'predict_soil' %}" class="btn">New Prediction</a>
+            <form method="get" action="{% url 'download_prediction_report' %}" style="display:inline-block; margin-left:1em;">
+                <label for="period" style="color:#6b5e3c; font-weight:bold; margin-right:0.5em;">Download Report:</label>
+                <select name="period" id="period" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+                <button type="submit" class="btn">Excel</button>
+            </form>
+            <form method="get" action="{% url 'download_prediction_report_pdf' %}" style="display:inline-block; margin-left:0.5em;">
+                <input type="hidden" name="period" value="daily" id="pdf_period_input">
+                <button type="submit" class="btn">PDF</button>
+            </form>
+            <script>
+                // Sync period selection between Excel and PDF forms
+                document.addEventListener('DOMContentLoaded', function() {
+                    var periodSelect = document.getElementById('period');
+                    var pdfPeriodInput = document.getElementById('pdf_period_input');
+                    periodSelect.addEventListener('change', function() {
+                        pdfPeriodInput.value = periodSelect.value;
+                    });
+                });
+            </script>
+        </div>
+</body>
+</html> 

@@ -1,0 +1,96 @@
+<nav class="navbar">
+    <div class="brand">
+        <img src="https://img.icons8.com/ios-filled/50/7bb661/plant-under-sun.png" alt="Logo" class="logo" />
+        <span class="project-name">Soil Moisture Detector</span>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="{% url 'predict_soil' %}">Predict</a>
+        <a href="{% url 'prediction_history' %}">History</a>
+        <a href="{% url 'analytics' %}">Analytics</a>
+        <div class="dropdown" id="accountDropdown" style="display:inline-block; position:relative;">
+            <a href="#" class="dropbtn" id="accountDropbtn" style="color:#fff; cursor:pointer;">Account</a>
+            <div class="dropdown-content" id="accountDropdownContent" style="display:none; position:absolute; background:#fff; min-width:120px; box-shadow:0 8px 16px rgba(0,0,0,0.15); z-index:1; right:0; border-radius:6px;">
+                <a href="{% url 'profile' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Profile</a>
+                <a href="{% url 'logout' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Logout</a>
+            </div>
+        </div>
+    </div>
+    <style>
+        .navbar { display: flex; align-items: center; justify-content: space-between; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .navbar .brand { display: flex; align-items: center; }
+        .navbar .logo { width: 36px; height: 36px; margin-right: 0.7em; }
+        .navbar .project-name { color: #fff; font-size: 1.3em; font-weight: bold; letter-spacing: 1px; }
+        .navbar .nav-links a { color: #fff; margin-left: 1.5em; text-decoration: none; font-size: 1em; transition: text-decoration 0.2s; }
+        .navbar .nav-links a:hover { text-decoration: underline; }
+        .dropdown { display: inline-block; position: relative; }
+        .dropbtn { color: #fff; cursor: pointer; padding: 0.5em 1.2em; border: none; background: none; font-size: 1em; font-family: inherit; border-radius: 6px; transition: background 0.2s; outline: none; position: relative; }
+        .dropbtn:after { content: '\25BC'; margin-left: 0.5em; font-size: 0.8em; vertical-align: middle; }
+        .dropbtn.active, .dropbtn:focus { background: #6ea04b; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 120%; background: #fff; min-width: 150px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); border-radius: 10px; z-index: 10; padding: 0.5em 0; animation: fadeIn 0.2s; }
+        .dropdown-content a { color: #4e3d1c; padding: 12px 22px; display: block; text-decoration: none; font-size: 1em; border: none; background: none; transition: background 0.18s, color 0.18s; border-radius: 6px; margin: 0 8px; }
+        .dropdown-content a:hover { background: #f4f1ee; color: #7bb661; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var dropbtn = document.getElementById('accountDropbtn');
+            var dropdown = document.getElementById('accountDropdownContent');
+            dropbtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                var isOpen = dropdown.style.display === 'block';
+                dropdown.style.display = isOpen ? 'none' : 'block';
+                dropbtn.classList.toggle('active', !isOpen);
+            });
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#accountDropdown')) {
+                    dropdown.style.display = 'none';
+                    dropbtn.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</nav>
+
+<h2>Prediction Result</h2>
+{% if prediction_table %}
+    <div style="overflow-x:auto; margin-bottom:2em;">
+        <h3>Batch Prediction Results</h3>
+        {{ prediction_table|safe }}
+    </div>
+{% else %}
+    <div style="max-width: 500px; margin: 2em auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 2rem; text-align:center;">
+        <h3>Single Prediction</h3>
+        <p><strong>Predicted Moisture:</strong> {{ prediction|floatformat:2 }}</p>
+        <p><strong>Status:</strong> {{ status }}</p>
+        <p><strong>Recommendation:</strong> {{ recommendation }}</p>
+    </div>
+{% endif %}
+<div style="text-align:center; margin-top:2em;">
+    <a href="{% url 'predict_soil' %}" style="padding:0.7em 2em; background:#7bb661; color:#fff; border:none; border-radius:6px; font-size:1.1em; text-decoration:none;">Try another prediction</a>
+</div>
+<style>
+    .prediction-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5em 0;
+        font-size: 1em;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .prediction-table th, .prediction-table td {
+        border: 1px solid #e0e0e0;
+        padding: 10px 14px;
+        text-align: center;
+    }
+    .prediction-table th {
+        background: #7bb661;
+        color: #fff;
+        font-weight: bold;
+    }
+    .prediction-table tr:nth-child(even) {
+        background: #f4f1ee;
+    }
+</style>

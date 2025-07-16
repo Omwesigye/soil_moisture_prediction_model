@@ -1,0 +1,90 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1>Soil Moisture Detector Admin Dashboard</h1>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Total Predictions</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ total_predictions }}</h5>
+                <p class="card-text">All soil moisture predictions recorded in the system.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Active Farmers</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ active_farmers }}</h5>
+                <p class="card-text">Farmers currently using the platform.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">Critical Alerts</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ critical_alerts }}</h5>
+                <p class="card-text">Recent critical soil moisture alerts.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Technicians</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ num_technicians }}</h5>
+                <p class="card-text">Active technicians monitoring the system.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-secondary mb-3">
+            <div class="card-header">ML Models</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ num_models }}</h5>
+                <p class="card-text">Machine learning models uploaded.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-3">
+            <div class="card-header">5 Most Recent Predictions</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>User</th>
+                            <th>Moisture (%)</th>
+                            <th>Status</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pred in recent_predictions %}
+                        <tr>
+                            <td>{{ pred.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ pred.user.email }}</td>
+                            <td>{{ pred.predicted_moisture }}</td>
+                            <td>{{ pred.status }}</td>
+                            <td>{{ pred.recommendation }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5"><em>No recent predictions.</em></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %} 

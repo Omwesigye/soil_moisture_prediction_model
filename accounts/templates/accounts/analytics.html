@@ -1,0 +1,244 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Soil Moisture Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f4f1ee url('{% static "images/download1.jpg" %}') no-repeat center center fixed; background-size: cover; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .navbar { display: flex; align-items: center; justify-content: space-between; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .navbar .brand { display: flex; align-items: center; }
+        .navbar .logo { width: 36px; height: 36px; margin-right: 0.7em; }
+        .navbar .project-name { color: #fff; font-size: 1.3em; font-weight: bold; letter-spacing: 1px; }
+        .navbar .nav-links a { color: #fff; margin-left: 1.5em; text-decoration: none; font-size: 1em; transition: text-decoration 0.2s; }
+        .navbar .nav-links a:hover { text-decoration: underline; }
+        .dropdown {
+            display: inline-block;
+            position: relative;
+        }
+        .dropbtn {
+            color: #fff;
+            cursor: pointer;
+            padding: 0.5em 1.2em;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-family: inherit;
+            border-radius: 6px;
+            transition: background 0.2s;
+            outline: none;
+            position: relative;
+        }
+        .dropbtn:after {
+            content: '\25BC';
+            margin-left: 0.5em;
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+        .dropbtn.active, .dropbtn:focus {
+            background: #6ea04b;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 120%;
+            background: #fff;
+            min-width: 150px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-radius: 10px;
+            z-index: 10;
+            padding: 0.5em 0;
+            animation: fadeIn 0.2s;
+        }
+        .dropdown-content a {
+            color: #4e3d1c;
+            padding: 12px 22px;
+            display: block;
+            text-decoration: none;
+            font-size: 1em;
+            border: none;
+            background: none;
+            transition: background 0.18s, color 0.18s;
+            border-radius: 6px;
+            margin: 0 8px;
+        }
+        .dropdown-content a:hover {
+            background: #f4f1ee;
+            color: #7bb661;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dashboard-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 2.5rem; }
+        .dashboard-title { color: #4e3d1c; margin-bottom: 1em; font-size: 2em; text-align: center; }
+        .summary-cards { display: flex; justify-content: space-between; margin-bottom: 2em; gap: 1.5em; }
+        .card { flex: 1; background: #f4f1ee; border-radius: 10px; padding: 1.2em 1.5em; box-shadow: 0 2px 8px rgba(0,0,0,0.07); text-align: center; }
+        .card-title { color: #7bb661; font-size: 1.1em; margin-bottom: 0.5em; }
+        .card-value { font-size: 1.7em; color: #4e3d1c; font-weight: bold; }
+        .chart-container { background: #fff; border-radius: 12px; padding: 1.5em; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 2em; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">
+            <img src="https://img.icons8.com/ios-filled/50/7bb661/plant-under-sun.png" alt="Logo" class="logo" />
+            <span class="project-name">Soil Moisture Detector</span>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">Home</a>
+            <a href="{% url 'predict_soil' %}">Predict</a>
+            <a href="{% url 'prediction_history' %}">History</a>
+            <a href="{% url 'analytics' %}">Analytics</a>
+            <div class="dropdown" id="accountDropdown" style="display:inline-block; position:relative;">
+                <a href="#" class="dropbtn" id="accountDropbtn" style="color:#fff; cursor:pointer;">Account</a>
+                <div class="dropdown-content" id="accountDropdownContent" style="display:none; position:absolute; background:#fff; min-width:120px; box-shadow:0 8px 16px rgba(0,0,0,0.15); z-index:1; right:0; border-radius:6px;">
+                    <a href="{% url 'profile' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Profile</a>
+                    <a href="{% url 'logout' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Logout</a>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var dropbtn = document.getElementById('accountDropbtn');
+                var dropdown = document.getElementById('accountDropdownContent');
+                dropbtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var isOpen = dropdown.style.display === 'block';
+                    dropdown.style.display = isOpen ? 'none' : 'block';
+                    dropbtn.classList.toggle('active', !isOpen);
+                });
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('#accountDropdown')) {
+                        dropdown.style.display = 'none';
+                        dropbtn.classList.remove('active');
+                    }
+                });
+            });
+        </script>
+    </nav>
+    <div class="dashboard-container">
+        <div class="chart-container">
+            <h3 style="text-align:center; color:#4e3d1c;">Real-Time Soil Moisture (Last 50 Records)</h3>
+            <canvas id="realtimeChart" height="80"></canvas>
+        </div>
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-title">Average Moisture</div>
+                <div class="card-value">{{ avg_moisture|floatformat:2 }}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Low Moisture Warnings</div>
+                <div class="card-value">{{ low_moisture_count }}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Records (Last 7 Days)</div>
+                <div class="card-value">{{ daily_trends|length }}</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="text-align:center; color:#4e3d1c;">Daily Average Moisture (Last 7 Days)</h3>
+            <canvas id="trendChart" height="80"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 style="text-align:center; color:#4e3d1c;">Predicted Moisture Trends</h3>
+            <canvas id="predictedMoistureLineChart" height="80"></canvas>
+            <canvas id="predictedMoistureBarChart" height="80" style="margin-top:30px;"></canvas>
+        </div>
+    </div>
+    <script>
+        // Real-time chart data
+        const realtimeLabels = [{% for rec in recent_records %}'{{ rec.created_at|date:"Y-m-d H:i" }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const realtimeData = [{% for rec in recent_records %}{{ rec.predicted_moisture|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const ctx = document.getElementById('realtimeChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: realtimeLabels,
+                datasets: [{
+                    label: 'Soil Moisture',
+                    data: realtimeData,
+                    borderColor: '#7bb661',
+                    backgroundColor: 'rgba(123,182,97,0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: true, title: { display: true, text: 'Time' } }, y: { beginAtZero: true, title: { display: true, text: 'Moisture' } } }
+            }
+        });
+        // Daily trend chart
+        const trendLabels = [{% for d in daily_trends %}'{{ d.created_day }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const trendData = [{% for d in daily_trends %}{{ d.avg_moisture|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const trendChart = new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Avg Moisture',
+                    data: trendData,
+                    backgroundColor: '#7bb661',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: true, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Avg Moisture' } } }
+            }
+        });
+        // Predicted Moisture Line Chart (actual predictions)
+        const predictedLabels = {{ predicted_labels|safe }};
+        const predictedData = {{ predicted_values|safe }};
+        const predictedLineCtx = document.getElementById('predictedMoistureLineChart').getContext('2d');
+        new Chart(predictedLineCtx, {
+            type: 'line',
+            data: {
+                labels: predictedLabels,
+                datasets: [{
+                    label: 'Predicted Moisture',
+                    data: predictedData,
+                    borderColor: '#388e3c',
+                    backgroundColor: 'rgba(56,142,60,0.13)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: true, title: { display: true, text: 'Date/Time' } }, y: { beginAtZero: true, title: { display: true, text: 'Predicted Moisture (%)' } } }
+            }
+        });
+        // Bar Chart for Predicted Moisture
+        const predictedBarCtx = document.getElementById('predictedMoistureBarChart').getContext('2d');
+        new Chart(predictedBarCtx, {
+            type: 'bar',
+            data: {
+                labels: predictedLabels,
+                datasets: [{
+                    label: 'Predicted Moisture',
+                    data: predictedData,
+                    backgroundColor: '#ff9800',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: true, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Predicted Moisture (%)' } } }
+            }
+        });
+    </script>
+</body>
+</html> 

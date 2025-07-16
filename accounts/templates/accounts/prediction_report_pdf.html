@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Report (PDF)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.2cm;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            font-size: 11px;
+        }
+        h2 {
+            color: #4e3d1c;
+            text-align: center;
+            margin-bottom: 0.5em;
+        }
+        .meta {
+            margin-bottom: 1em;
+            color: #555;
+            font-size: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+            table-layout: fixed;
+            word-break: break-word;
+        }
+        th, td {
+            border: 1px solid #bbb;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 10px;
+        }
+        th {
+            background: #7bb661;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f4f1ee;
+        }
+    </style>
+</head>
+<body>
+    <h2>Prediction Report ({{ period|title }})</h2>
+    <div class="meta">
+        <strong>User:</strong> {{ user.email }}<br>
+        <strong>Period Start:</strong> {{ start_date|date:"Y-m-d H:i" }}<br>
+        <strong>Generated At:</strong> {{ now|date:"Y-m-d H:i" }}
+    </div>
+    <table>
+        <colgroup>
+            <col style="width: 8%;">
+            <col style="width: 10%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 5%;">
+            <col style="width: 5%;">
+            <col style="width: 6%;">
+            <col style="width: 8%;">
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 9%;">
+            <col style="width: 13%;"> <!-- Recommendation column -->
+        </colgroup>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Temperature (°C)</th>
+                <th>Humidity (%)</th>
+                <th>Battery Voltage</th>
+                <th>Hour</th>
+                <th>Day</th>
+                <th>Month</th>
+                <th>Weekday</th>
+                <th>Location Encoded</th>
+                <th>Predicted Moisture</th>
+                <th>Status</th>
+                <th style="word-break: break-word;">Recommendation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rec in records %}
+            <tr>
+                <td>{{ rec.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ rec.temperature_celcius }}</td>
+                <td>{{ rec.humidity_percent }}</td>
+                <td>{{ rec.battery_voltage }}</td>
+                <td>{{ rec.hour }}</td>
+                <td>{{ rec.day }}</td>
+                <td>{{ rec.month }}</td>
+                <td>{{ rec.weekday }}</td>
+                <td>{{ rec.location_encoded }}</td>
+                <td>{{ rec.predicted_moisture|floatformat:2 }}</td>
+                <td>{{ rec.status }}</td>
+                <td>{{ rec.recommendation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html> 

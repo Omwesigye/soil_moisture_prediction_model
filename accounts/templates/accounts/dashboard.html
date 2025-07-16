@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Moisture Detector - Dashboard</title>
+    <style>
+        body { background: #f4f1ee url('{% static "images/download1.jpg" %}') no-repeat center center fixed; background-size: cover; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .navbar { display: flex; align-items: center; justify-content: space-between; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .navbar .brand { display: flex; align-items: center; }
+        .navbar .logo { width: 36px; height: 36px; margin-right: 0.7em; }
+        .navbar .project-name { color: #fff; font-size: 1.3em; font-weight: bold; letter-spacing: 1px; }
+        .navbar .nav-links a { color: #fff; margin-left: 1.5em; text-decoration: none; font-size: 1em; transition: text-decoration 0.2s; }
+        .navbar .nav-links a:hover { text-decoration: underline; }
+        .dropdown {
+            display: inline-block;
+            position: relative;
+        }
+        .dropbtn {
+            color: #fff;
+            cursor: pointer;
+            padding: 0.5em 1.2em;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-family: inherit;
+            border-radius: 6px;
+            transition: background 0.2s;
+            outline: none;
+            position: relative;
+        }
+        .dropbtn:after {
+            content: '\25BC';
+            margin-left: 0.5em;
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+        .dropbtn.active, .dropbtn:focus {
+            background: #6ea04b;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 120%;
+            background: #fff;
+            min-width: 150px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-radius: 10px;
+            z-index: 10;
+            padding: 0.5em 0;
+            animation: fadeIn 0.2s;
+        }
+        .dropdown-content a {
+            color: #4e3d1c;
+            padding: 12px 22px;
+            display: block;
+            text-decoration: none;
+            font-size: 1em;
+            border: none;
+            background: none;
+            transition: background 0.18s, color 0.18s;
+            border-radius: 6px;
+            margin: 0 8px;
+        }
+        .dropdown-content a:hover {
+            background: #f4f1ee;
+            color: #7bb661;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">
+            <img src="https://img.icons8.com/ios-filled/50/7bb661/plant-under-sun.png" alt="Logo" class="logo" />
+            <span class="project-name">Soil Moisture Detector</span>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">Home</a>
+            <a href="{% url 'predict_soil' %}">Predict</a>
+            <a href="{% url 'prediction_history' %}">History</a>
+            <a href="{% url 'analytics' %}">Analytics</a>
+            <div class="dropdown" id="accountDropdown" style="display:inline-block; position:relative;">
+                <a href="#" class="dropbtn" id="accountDropbtn" style="color:#fff; cursor:pointer;">Account</a>
+                <div class="dropdown-content" id="accountDropdownContent" style="display:none; position:absolute; background:#fff; min-width:120px; box-shadow:0 8px 16px rgba(0,0,0,0.15); z-index:1; right:0; border-radius:6px;">
+                    <a href="{% url 'profile' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Profile</a>
+                    <a href="{% url 'logout' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Logout</a>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var dropbtn = document.getElementById('accountDropbtn');
+                var dropdown = document.getElementById('accountDropdownContent');
+                dropbtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var isOpen = dropdown.style.display === 'block';
+                    dropdown.style.display = isOpen ? 'none' : 'block';
+                    dropbtn.classList.toggle('active', !isOpen);
+                });
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('#accountDropdown')) {
+                        dropdown.style.display = 'none';
+                        dropbtn.classList.remove('active');
+                    }
+                });
+            });
+        </script>
+    </nav>
+    <div class="dashboard-container" style="max-width: 900px;">
+        <div class="dashboard-title">Welcome, {{ user.name|default:user.email }}!</div>
+        <div class="dashboard-welcome">You are logged in to the Soil Moisture Detector system.<br>Use the navigation above to access your profile or log out.</div>
+        <div class="farmer-overview" style="background: #e8f5e9; border-left: 6px solid #388e3c; padding: 20px 26px; border-radius: 10px; margin-top: 18px; text-align: left;">
+            <h2 style="margin-top: 0; color: #2d7a2d; font-size: 1.3em;">Farmer Dashboard Overview</h2>
+            <p style="color: #388e3c; font-size: 1.08em; margin-bottom: 0;">
+                As a farmer, you can monitor your soil moisture data, receive timely irrigation recommendations, and view alerts when your soil moisture drops below safe levels. Use the dashboard to track your field's health, access prediction history, and make informed decisions to optimize your crop yield and water usage.
+            </p>
+        </div>
+        
+        {% if latest_prediction %}
+        <div class="irrigation-section" style="background: #e8f5e9; border-left: 6px solid #388e3c; padding: 20px 26px; border-radius: 10px; margin-top: 18px; text-align: left;">
+            <h2 style="margin-top: 0; color: #2d7a2d; font-size: 1.3em;">Latest Irrigation Recommendation</h2>
+            <p style="color: #388e3c; font-size: 1.08em; margin-bottom: 0;">
+                <strong>Predicted Moisture:</strong> {{ latest_moisture|floatformat:2 }}%<br>
+                <strong>Recommendation:</strong> <span style="font-weight: bold; color: #d32f2f;">{{ irrigation_recommendation }}</span>
+            </p>
+        </div>
+        {% endif %}
+        
+        {% if recent_alerts %}
+        <div class="alerts-section" style="background: #fff3cd; border-left: 5px solid #ff9800; padding: 20px 26px; border-radius: 10px; margin-top: 18px; text-align: left;">
+            <h2 style="margin-top: 0; color: #ff9800; font-size: 1.3em;">Recent Alerts</h2>
+            <ul style="color: #856404; font-size: 1.08em; margin-bottom: 0;">
+                {% for alert in recent_alerts %}
+                    <li>
+                        {{ alert.message }} ({{ alert.created_at|date:"Y-m-d H:i" }})
+                        <form method="post" action="{% url 'mark_alert_read' alert.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" style="background:none; border:none; color:#388e3c; cursor:pointer;">Mark as read</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div class="chart-container">
+            <h3 style="text-align:center; color:#4e3d1c;">Soil Moisture History (Last 30 Days)</h3>
+            <canvas id="moistureHistoryChart" height="80"></canvas>
+        </div>
+        <script>
+            const mhLabels = {{ moisture_history_labels|safe }};
+            const mhData = {{ moisture_history_values|safe }};
+            const mhCtx = document.getElementById('moistureHistoryChart').getContext('2d');
+            new Chart(mhCtx, {
+                type: 'line',
+                data: {
+                    labels: mhLabels,
+                    datasets: [{
+                        label: 'Avg Moisture',
+                        data: mhData,
+                        borderColor: '#388e3c',
+                        backgroundColor: 'rgba(56,142,60,0.13)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: true, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Moisture (%)' } } }
+                }
+            });
+        </script>
+        <div class="dashboard-actions" style="margin: 2.5em auto 0 auto; text-align: center;">
+            <a href="{% url 'predict_soil' %}">Soil Prediction</a>
+            <a href="{% url 'download_prediction_report' %}?period=monthly" style="background:#388e3c;">Download Data (CSV)</a>
+        </div>
+    </div>
+    <style>
+        .dashboard-container {
+            background: rgba(255,255,255,0.95);
+            max-width: 900px;
+            margin: 70px auto 0 auto;
+            padding: 2.5rem 2.5rem 2rem 2.5rem;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+            text-align: center;
+        }
+        .dashboard-title {
+            color: #388e3c;
+            margin-bottom: 0.4em;
+            font-size: 2.1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .dashboard-welcome {
+            color: #4e3d1c;
+            font-size: 1.13em;
+            margin-bottom: 1.7em;
+        }
+        .dashboard-actions {
+            margin-bottom: 2.2em;
+        }
+        .dashboard-actions a {
+            display: inline-block;
+            margin: 0.5em 1em 0 1em;
+            padding: 0.7em 2.1em;
+            background: #7bb661;
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            font-size: 1.13em;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(123,182,97,0.08);
+        }
+        .dashboard-actions a:hover {
+            background: #388e3c;
+            box-shadow: 0 4px 16px rgba(56,142,60,0.13);
+        }
+        .tech-overview {
+            background: #e8f5e9;
+            border-left: 6px solid #388e3c;
+            padding: 20px 26px;
+            border-radius: 10px;
+            margin-top: 18px;
+            text-align: left;
+        }
+        .tech-overview h2 {
+            margin-top: 0;
+            color: #2d7a2d;
+            font-size: 1.3em;
+        }
+        .tech-overview p {
+            color: #388e3c;
+            font-size: 1.08em;
+            margin-bottom: 0;
+        }
+        @media (max-width: 700px) {
+            .dashboard-container {
+                max-width: 98vw;
+                padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+            }
+            .tech-overview {
+                padding: 14px 8px;
+            }
+        }
+    </style>
+</body>
+</html> 

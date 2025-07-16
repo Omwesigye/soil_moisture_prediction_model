@@ -1,0 +1,106 @@
+<nav class="navbar">
+    <div class="brand">
+        <img src="https://img.icons8.com/ios-filled/50/7bb661/plant-under-sun.png" alt="Logo" class="logo" />
+        <span class="project-name">Soil Moisture Detector</span>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="{% url 'predict_soil' %}">Predict</a>
+        <a href="{% url 'prediction_history' %}">History</a>
+        <a href="{% url 'analytics' %}">Analytics</a>
+        <div class="dropdown" id="accountDropdown" style="display:inline-block; position:relative;">
+            <a href="#" class="dropbtn" id="accountDropbtn" style="color:#fff; cursor:pointer;">Account</a>
+            <div class="dropdown-content" id="accountDropdownContent" style="display:none; position:absolute; background:#fff; min-width:120px; box-shadow:0 8px 16px rgba(0,0,0,0.15); z-index:1; right:0; border-radius:6px;">
+                <a href="{% url 'profile' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Profile</a>
+                <a href="{% url 'logout' %}" style="color:#4e3d1c; padding:10px 16px; display:block; text-decoration:none;">Logout</a>
+            </div>
+        </div>
+    </div>
+    <style>
+        .navbar { display: flex; align-items: center; justify-content: space-between; background: #7bb661; padding: 0.7em 2em; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .navbar .brand { display: flex; align-items: center; }
+        .navbar .logo { width: 36px; height: 36px; margin-right: 0.7em; }
+        .navbar .project-name { color: #fff; font-size: 1.3em; font-weight: bold; letter-spacing: 1px; }
+        .navbar .nav-links a { color: #fff; margin-left: 1.5em; text-decoration: none; font-size: 1em; transition: text-decoration 0.2s; }
+        .navbar .nav-links a:hover { text-decoration: underline; }
+        .dropdown { display: inline-block; position: relative; }
+        .dropbtn { color: #fff; cursor: pointer; padding: 0.5em 1.2em; border: none; background: none; font-size: 1em; font-family: inherit; border-radius: 6px; transition: background 0.2s; outline: none; position: relative; }
+        .dropbtn:after { content: '\25BC'; margin-left: 0.5em; font-size: 0.8em; vertical-align: middle; }
+        .dropbtn.active, .dropbtn:focus { background: #6ea04b; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 120%; background: #fff; min-width: 150px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); border-radius: 10px; z-index: 10; padding: 0.5em 0; animation: fadeIn 0.2s; }
+        .dropdown-content a { color: #4e3d1c; padding: 12px 22px; display: block; text-decoration: none; font-size: 1em; border: none; background: none; transition: background 0.18s, color 0.18s; border-radius: 6px; margin: 0 8px; }
+        .dropdown-content a:hover { background: #f4f1ee; color: #7bb661; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var dropbtn = document.getElementById('accountDropbtn');
+            var dropdown = document.getElementById('accountDropdownContent');
+            dropbtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                var isOpen = dropdown.style.display === 'block';
+                dropdown.style.display = isOpen ? 'none' : 'block';
+                dropbtn.classList.toggle('active', !isOpen);
+            });
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#accountDropdown')) {
+                    dropdown.style.display = 'none';
+                    dropbtn.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</nav>
+
+<div style="max-width: 500px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 2rem;">
+    <h2 style="text-align:center; color:#4e3d1c;">Soil Moisture Prediction</h2>
+    {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="margin-bottom: 1.5em;">
+            <label style="font-weight:bold; color:#6b5e3c;">Choose input method:</label><br>
+            <input type="radio" name="input_method" value="form" id="input_form" checked> <label for="input_form">Fill Form</label>
+            <input type="radio" name="input_method" value="csv" id="input_csv" style="margin-left:2em;"> <label for="input_csv">Upload CSV</label>
+        </div>
+        <div id="form_fields">
+            <label>Temperature (°C): <input type="number" step="any" name="temperature_celcius" required></label><br><br>
+            <label>Humidity (%): <input type="number" step="any" name="humidity_percent" required></label><br><br>
+            <label>Battery Voltage: <input type="number" step="any" name="battery_voltage" required></label><br><br>
+            <label>Hour: <input type="number" name="hour" min="0" max="23" required></label><br><br>
+            <label>Day: <input type="number" name="day" min="1" max="31" required></label><br><br>
+            <label>Month: <input type="number" name="month" min="1" max="12" required></label><br><br>
+            <label>Weekday: <input type="number" name="weekday" min="0" max="6" required></label><br><br>
+            <label>Location (encoded): <input type="number" name="location_encoded" required></label>
+        </div>
+        <div id="csv_field" style="display:none;">
+            <label>Upload CSV File: <input type="file" name="csv_file" accept=".csv"></label>
+            <p style="font-size:0.95em; color:#6b5e3c;">CSV must have columns: temperature_celcius, humidity_percent, battery_voltage, hour, day, month, weekday, location_encoded</p>
+        </div>
+        <div style="text-align:center; margin-top:2em;">
+            <button type="submit" style="padding:0.7em 2em; background:#7bb661; color:#fff; border:none; border-radius:6px; font-size:1.1em; cursor:pointer;">Predict</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function toggleInputFields() {
+            var formFields = document.getElementById('form_fields');
+            var csvField = document.getElementById('csv_field');
+            if (document.getElementById('input_form').checked) {
+                formFields.style.display = '';
+                csvField.style.display = 'none';
+                Array.from(formFields.querySelectorAll('input')).forEach(function(input) { input.required = true; });
+                formFields.querySelectorAll('input').forEach(function(input) { input.disabled = false; });
+                csvField.querySelector('input').disabled = true;
+            } else {
+                formFields.style.display = 'none';
+                csvField.style.display = '';
+                Array.from(formFields.querySelectorAll('input')).forEach(function(input) { input.required = false; input.disabled = true; });
+                csvField.querySelector('input').disabled = false;
+            }
+        }
+        document.getElementById('input_form').addEventListener('change', toggleInputFields);
+        document.getElementById('input_csv').addEventListener('change', toggleInputFields);
+        toggleInputFields();
+    });
+</script>

@@ -1,0 +1,21 @@
+<h2>Retrain Model: {{ model.name }}</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        <label>Upload new training data (CSV):</label>
+        <input type="file" name="training_file" accept=".csv">
+    </div>
+    <div style="margin:1em 0;">Or retrain using the previous training data.</div>
+    <button type="submit">Start Retraining</button>
+</form>
+{% if task_id %}
+    <h3>Retraining Status</h3>
+    {% if log %}
+        <pre>{{ log.stdout }}</pre>
+        <pre style="color:red;">{{ log.stderr }}</pre>
+        <div>Return code: {{ log.returncode }}</div>
+    {% else %}
+        <div>Retraining in progress... (refresh to update)</div>
+    {% endif %}
+{% endif %}
+<a href="{% url 'view_models' %}">Back to Model List</a> 

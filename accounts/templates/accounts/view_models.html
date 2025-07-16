@@ -1,0 +1,16 @@
+<h2>Uploaded ML Models</h2>
+<ul>
+    {% for model in models %}
+        <li>
+            {{ model.name }} - Uploaded at: {{ model.uploaded_at }} -
+            <a href="{{ model.model_file.url }}">Download</a>
+            {% if model.is_active %}
+                <strong style="color:green;">[Active]</strong>
+                <a href="{% url 'deactivate_model' model.id %}">Deactivate</a>
+            {% else %}
+                <a href="{% url 'activate_model' model.id %}">Activate</a>
+            {% endif %}
+            <a href="{% url 'retrain_model' model.id %}">Retrain</a>
+        </li>
+    {% endfor %}
+</ul> 
