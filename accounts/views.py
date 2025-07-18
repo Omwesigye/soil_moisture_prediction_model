@@ -38,8 +38,60 @@ from django.urls import reverse
 from django.http import JsonResponse
 from .models import Alert
 from django.views.decorators.http import require_POST
+import numpy as np
+from tensorflow import keras
+import warnings
+warnings.filterwarnings("ignore")
+import glob
 
 User = get_user_model()
+
+# Paths
+MODEL_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'soil_moisture_model.keras')
+FEATURE_SCALER_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'feature_scaler.pkl')
+MOISTURE_SCALER_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'moisture_scaler.pkl')
+ACTION_ENCODER_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'action_encoder.pkl')
+
+# Remove global model/artifact loading
+# model = keras.models.load_model(MODEL_PATH)
+# feature_scaler = joblib.load(FEATURE_SCALER_PATH)
+# moisture_scaler = joblib.load(MOISTURE_SCALER_PATH)
+# action_encoder = joblib.load(ACTION_ENCODER_PATH)
+
+def load_artifacts():
+    import os
+    import joblib
+    from accounts.models import MLModel
+    from django.core.exceptions import ObjectDoesNotExist
+
+    try:
+        # Try to get the active model from the database
+        try:
+            active_model = MLModel.objects.get(is_active=True)
+            model_path = active_model.model_file.path
+            if not os.path.exists(model_path):
+                raise FileNotFoundError
+        except (ObjectDoesNotExist, FileNotFoundError):
+            # Fallback: use the latest .keras file in ml_models directory
+            model_files = glob.glob(os.path.join(settings.BASE_DIR, 'ml_models', '*.keras'))
+            if not model_files:
+                raise RuntimeError("No model file found in ml_models directory.")
+            model_path = max(model_files, key=os.path.getctime)  # Most recently created
+
+        if not os.path.exists(FEATURE_SCALER_PATH):
+            raise FileNotFoundError(f"Feature scaler not found: {FEATURE_SCALER_PATH}")
+        if not os.path.exists(MOISTURE_SCALER_PATH):
+            raise FileNotFoundError(f"Moisture scaler not found: {MOISTURE_SCALER_PATH}")
+        if not os.path.exists(ACTION_ENCODER_PATH):
+            raise FileNotFoundError(f"Action encoder not found: {ACTION_ENCODER_PATH}")
+
+        model = keras.models.load_model(model_path)
+        feature_scaler = joblib.load(FEATURE_SCALER_PATH)
+        moisture_scaler = joblib.load(MOISTURE_SCALER_PATH)
+        action_encoder = joblib.load(ACTION_ENCODER_PATH)
+        return model, feature_scaler, moisture_scaler, action_encoder
+    except Exception as e:
+        raise RuntimeError(f"Error loading ML model or artifacts: {e}")
 
 # Create your views here.
 
@@ -71,18 +123,6 @@ def send_moisture_alert(user, predicted_moisture, recommendation):
             message=f"Low moisture alert: {predicted_moisture}% - {recommendation}"
         )
 
-def generate_irrigation_recommendation(moisture):
-    if moisture < 15:
-        return "Irrigate"
-    elif 15 <= moisture < 30:
-        return "Reduce Irrigation"
-    elif 30 <= moisture < 50:
-        return "None"
-    elif 50 <= moisture < 65:
-        return "Reduce Irrigation"
-    else:
-        return "None"
-
 @login_required
 def dashboard(request):
     # Get latest prediction and generate recommendation
@@ -92,8 +132,7 @@ def dashboard(request):
     
     if latest_prediction:
         latest_moisture = latest_prediction.predicted_moisture
-        irrigation_recommendation = generate_irrigation_recommendation(latest_moisture)
-        
+        irrigation_recommendation = latest_prediction.recommendation
         # Send notifications if moisture is low
         send_moisture_alert(request.user, latest_moisture, irrigation_recommendation)
     
@@ -236,115 +275,74 @@ def user_logout(request):
     logout(request)
     return redirect('home')
 
-def get_latest_model():
-    latest = MLModel.objects.order_by('-uploaded_at').first()
-    if latest:
-        return joblib.load(latest.model_file.path)
-    return None
+def admin_logout(request):
+    logout(request)
+    return redirect('home')
 
-def get_status(moisture):
-    if moisture < 15:
-        return "Critical Low", "Irrigate"
-    elif 15 <= moisture < 30:
-        return "Dry", "Reduce Irrigation"
-    elif 30 <= moisture < 50:
-        return "Normal", "None"
-    elif 50 <= moisture < 65:
-        return "Wet", "Reduce Irrigation"
-    else:
-        return "Critical High", "None"
+def predict_soil_moisture(sample_data: dict):
+    # Load model and artifacts
+    model, feature_scaler, moisture_scaler, irrigation_encoder = load_artifacts()
+    # Use the keys from sample_data to build the input
+    feature_order = ['temperature_celcius', 'humidity_percent', 'battery_voltage', 'hour', 'day', 'month', 'weekday', 'location_encoded']
+    sample_input = np.array([[sample_data[feat] for feat in feature_order]])
+    sample_input_scaled = feature_scaler.transform(sample_input)
+    
+    # Predict
+    output = model.predict(sample_input_scaled)
+    pred_moisture = output['moisture_level']
+    pred_irrigation = output['irrigation_action']
+    
+    # Convert moisture back from [0,1] to [0,100]
+    moisture_value = moisture_scaler.inverse_transform(pred_moisture.reshape(1, -1))[0][0]
+    
+    # Decode irrigation action label
+    irrigation_index = np.argmax(pred_irrigation[0])
+    irrigation_action = irrigation_encoder.inverse_transform([irrigation_index])[0]
+    
+    return moisture_value, irrigation_action
 
+@login_required
 def predict_soil(request):
     if request.method == 'POST':
-        input_method = request.POST.get('input_method')
-        model = get_latest_model()
-        if model is None:
-            return render(request, 'accounts/predict_form.html', {'error': 'No model uploaded yet.'})
-
-        if input_method == 'form':
+        try:
+            # Build sample_data dict from form fields
+            sample_data = {
+                'temperature_celcius': float(request.POST['temperature_celcius']),
+                'humidity_percent': float(request.POST['humidity_percent']),
+                'battery_voltage': float(request.POST['battery_voltage']),
+                'hour': int(request.POST['hour']),
+                'day': int(request.POST['day']),
+                'month': int(request.POST['month']),
+                'weekday': int(request.POST['weekday']),
+                'location_encoded': int(request.POST['location_encoded']),
+            }
+            print('Sample data for model:', sample_data)
             try:
-                temperature_celcius = float(request.POST.get('temperature_celcius'))
-                humidity_percent = float(request.POST.get('humidity_percent'))
-                battery_voltage = float(request.POST.get('battery_voltage'))
-                hour = int(request.POST.get('hour'))
-                day = int(request.POST.get('day'))
-                month = int(request.POST.get('month'))
-                weekday = int(request.POST.get('weekday'))
-                location_encoded = int(request.POST.get('location_encoded'))
-                X = [[temperature_celcius, humidity_percent, battery_voltage, hour, day, month, weekday, location_encoded]]
-                predicted_moisture = model.predict(X)[0]
-                status, recommendation = get_status(predicted_moisture)
-                # Save to database
-                record = PredictionRecord.objects.create(  # type: ignore
-                    user=request.user,
-                    temperature_celcius=temperature_celcius,
-                    humidity_percent=humidity_percent,
-                    battery_voltage=battery_voltage,
-                    hour=hour,
-                    day=day,
-                    month=month,
-                    weekday=weekday,
-                    location_encoded=location_encoded,
-                    predicted_moisture=predicted_moisture,
-                    status=status,
-                    recommendation=recommendation
-                )
-                if request.user.role == 'farmer' and status in ['Critical Low', 'Low']:
-                    pass
-                return render(request, 'accounts/predict_result.html', {
-                    'prediction': predicted_moisture,
-                    'status': status,
-                    'recommendation': recommendation
-                })
+                predicted_moisture, irrigation_action = predict_soil_moisture(sample_data)
             except Exception as e:
-                return render(request, 'accounts/predict_form.html', {'error': f'Invalid input: {e}'})
-
-        elif input_method == 'csv':
-            csv_file = request.FILES.get('csv_file')
-            if not csv_file:
-                return render(request, 'accounts/predict_form.html', {'error': 'Please upload a CSV file.'})
-            try:
-                df = pd.read_csv(csv_file)
-                required_columns = ['temperature_celcius', 'humidity_percent', 'battery_voltage', 'hour', 'day', 'month', 'weekday', 'location_encoded']
-                if not all(col in df.columns for col in required_columns):
-                    return render(request, 'accounts/predict_form.html', {'error': 'CSV must contain columns: ' + ', '.join(required_columns)})
-                X = df[required_columns].values
-                predictions = model.predict(X)
-                statuses = []
-                recommendations = []
-                for i, moisture in enumerate(predictions):
-                    status, recommendation = get_status(moisture)
-                    statuses.append(status)
-                    recommendations.append(recommendation)
-                    # Save each row to database
-                    record = PredictionRecord.objects.create(  # type: ignore
-                        user=request.user,
-                        temperature_celcius=df.iloc[i]['temperature_celcius'],
-                        humidity_percent=df.iloc[i]['humidity_percent'],
-                        battery_voltage=df.iloc[i]['battery_voltage'],
-                        hour=df.iloc[i]['hour'],
-                        day=df.iloc[i]['day'],
-                        month=df.iloc[i]['month'],
-                        weekday=df.iloc[i]['weekday'],
-                        location_encoded=df.iloc[i]['location_encoded'],
-                        predicted_moisture=moisture,
-                        status=status,
-                        recommendation=recommendation
-                    )
-                    if request.user.role == 'farmer' and status in ['Critical Low', 'Low']:
-                        pass
-                results = df.copy()
-                results['predicted_moisture'] = predictions
-                results['status'] = statuses
-                results['recommendation'] = recommendations
-                table_html = results.to_html(index=False, classes='prediction-table', border=0)
-                return render(request, 'accounts/predict_result.html', {'prediction_table': table_html})
-            except Exception as e:
-                return render(request, 'accounts/predict_form.html', {'error': f'Error processing CSV: {e}'})
-
-        else:
-            return render(request, 'accounts/predict_form.html', {'error': 'Invalid input method.'})
-
+                return render(request, 'accounts/predict_form.html', {'error': f'Model or artifacts missing/corrupt: {e}'})
+            # Store prediction in the database
+            from accounts.models import PredictionRecord
+            PredictionRecord.objects.create(
+                user=request.user,
+                temperature_celcius=sample_data['temperature_celcius'],
+                humidity_percent=sample_data['humidity_percent'],
+                battery_voltage=sample_data['battery_voltage'],
+                hour=sample_data['hour'],
+                day=sample_data['day'],
+                month=sample_data['month'],
+                weekday=sample_data['weekday'],
+                location_encoded=sample_data['location_encoded'],
+                predicted_moisture=predicted_moisture,
+                recommendation=irrigation_action
+            )
+            return render(request, 'accounts/predict_result.html', {
+                'predicted_moisture': predicted_moisture,
+                'irrigation_action': irrigation_action
+            })
+        except Exception as e:
+            print("Prediction error:", e)
+            return render(request, 'accounts/predict_form.html', {'error': f'Invalid input: {e}'})
     return render(request, 'accounts/predict_form.html')
 
 @login_required
@@ -353,29 +351,23 @@ def prediction_history(request):
     # Filtering
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    status = request.GET.get('status')
     recommendation = request.GET.get('recommendation')
     location_encoded = request.GET.get('location_encoded')
     if start_date:
         records = records.filter(created_at__date__gte=start_date)
     if end_date:
         records = records.filter(created_at__date__lte=end_date)
-    if status and status != 'all':
-        records = records.filter(status=status)
     if recommendation and recommendation != 'all':
         records = records.filter(recommendation=recommendation)
     if location_encoded and location_encoded != 'all':
         records = records.filter(location_encoded=location_encoded)
     # For dropdowns
-    all_statuses = PredictionRecord.objects.filter(user=request.user).values_list('status', flat=True).distinct()  # type: ignore
     all_recommendations = PredictionRecord.objects.filter(user=request.user).values_list('recommendation', flat=True).distinct()  # type: ignore
     all_location_encoded = PredictionRecord.objects.filter(user=request.user).values_list('location_encoded', flat=True).distinct()  # type: ignore
     return render(request, 'accounts/prediction_history.html', {
         'records': records,
         'start_date': start_date or '',
         'end_date': end_date or '',
-        'status': status or 'all',
-        'all_statuses': all_statuses,
         'recommendation': recommendation or 'all',
         'all_recommendations': all_recommendations,
         'location_encoded': location_encoded or 'all',
@@ -423,7 +415,7 @@ def download_prediction_report(request):
 def download_prediction_report_pdf(request):
     period = request.GET.get('period', 'daily')
     user = request.user
-    now = datetime.now()
+    now = datetime.datetime.now()
 
     if period == 'daily':
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -473,7 +465,7 @@ def analytics_dashboard(request):
         .order_by('created_day')
     )
     # Risk warnings (e.g., count of low moisture predictions)
-    low_moisture_count = all_records.filter(status='Low').count()
+    low_moisture_count = all_records.filter(recommendation='Irrigate').count() # Changed from status to recommendation
     # Predicted moisture values for line chart (last 20 predictions)
     predicted_records = all_records.order_by('-created_at')[:20][::-1]
     predicted_labels = [rec.created_at.strftime('%Y-%m-%d %H:%M') for rec in predicted_records]
@@ -527,6 +519,8 @@ def retrain_model(request, model_id):
     model = get_object_or_404(MLModel, id=model_id)
     log = None
     task_id = request.GET.get('task_id')
+    import os
+    from tensorflow import keras
     if request.method == 'POST':
         # Option 1: Use uploaded file
         if 'training_file' in request.FILES:
@@ -534,17 +528,27 @@ def retrain_model(request, model_id):
             file_path = default_storage.save(f'ml_models/tmp/{file.name}', ContentFile(file.read()))
             data_path = os.path.join(settings.MEDIA_ROOT, file_path)
         else:
-            # Option 2: Use previous data
-            data_path = os.path.join(settings.BASE_DIR, 'ml_models', 'training_data.csv')
-        output_path = model.model_file.path
+            # Option 2: Use the correct dataset path
+            data_path = os.path.join(settings.BASE_DIR, 'ml_models', 'cleaned_soil_moisture_dataset.csv')
+        model_dir = os.path.dirname(model.model_file.path)
         # Start Celery task
-        task = retrain_model_task.delay(model.id, data_path, output_path)
+        task = retrain_model_task.delay(model.id, data_path, model_dir)
         return redirect(f"{reverse('retrain_model', args=[model.id])}?task_id={task.id}")
     # If task_id is present, show status/logs
     if task_id:
         result = AsyncResult(task_id)
         if result.ready():
             log = result.result
+            # Post-retrain check: verify model file
+            model_path = model.model_file.path
+            if os.path.exists(model_path):
+                try:
+                    keras.models.load_model(model_path)
+                    messages.success(request, "Model retrained, saved, and ready for predictions!")
+                except Exception as e:
+                    messages.error(request, f"Model file exists but is invalid: {e}")
+            else:
+                messages.error(request, "Model file was not created after retraining.")
     return render(request, 'accounts/retrain_model.html', {'model': model, 'log': log, 'task_id': task_id})
 
 def custom_admin_login(request):
@@ -561,3 +565,14 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect('dashboard')
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import PredictionRecord
+from .forms import PredictionRecordForm
+
+def delete_prediction(request, pk):
+    prediction = get_object_or_404(PredictionRecord, pk=pk, user=request.user)
+    if request.method == 'POST':
+        prediction.delete()
+        return redirect('prediction_history')
+    return redirect('prediction_history')

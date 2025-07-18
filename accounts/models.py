@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 import uuid
 from django.contrib.auth import get_user_model
+from .custom_storage import MLModelStorage
 
 # Create your models here.
 
@@ -47,7 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class MLModel(models.Model):
     name = models.CharField(max_length=100, default="Soil Model")
-    model_file = models.FileField(upload_to='ml_models/')  # Accept any file extension
+    model_file = models.FileField(upload_to='', storage=MLModelStorage())  # Store directly in ml_models/
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
 
@@ -65,10 +66,11 @@ class PredictionRecord(models.Model):
     weekday = models.IntegerField()
     location_encoded = models.IntegerField()
     predicted_moisture = models.FloatField()
-    status = models.CharField(max_length=32)
     recommendation = models.CharField(max_length=64)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    def __str__(self):
+        return f"Prediction by {self.user} on {self.created_at}"
+
 class PasswordResetCode(models.Model):
     email = models.EmailField(max_length=191)
     code = models.CharField(max_length=6)

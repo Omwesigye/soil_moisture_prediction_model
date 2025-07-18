@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Soil Detection</title>
+    {% load static %}
     <style>
-        body { background: #f4f1ee; font-family: 'Segoe UI', sans-serif; }
+        body {
+            background: url('{% static "images/reg.jpg" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+        }
         .container { background: #fff; max-width: 400px; margin: 60px auto; padding: 2rem 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
         h2 { color: #4e3d1c; text-align: center; }
         form { display: flex; flex-direction: column; }

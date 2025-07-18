@@ -79,7 +79,6 @@
                 <th>Weekday</th>
                 <th>Location Encoded</th>
                 <th>Predicted Moisture</th>
-                <th>Status</th>
                 <th style="word-break: break-word;">Recommendation</th>
             </tr>
         </thead>
@@ -96,7 +95,6 @@
                 <td>{{ rec.weekday }}</td>
                 <td>{{ rec.location_encoded }}</td>
                 <td>{{ rec.predicted_moisture|floatformat:2 }}</td>
-                <td>{{ rec.status }}</td>
                 <td>{{ rec.recommendation }}</td>
             </tr>
             {% endfor %}
