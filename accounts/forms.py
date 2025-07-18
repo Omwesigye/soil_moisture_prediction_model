@@ -3,6 +3,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from .models import CustomUser
 from django.contrib.auth import authenticate
 from .models import MLModel
+from .models import PredictionRecord
 
 class UserRegistrationForm(forms.ModelForm):
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
@@ -54,3 +55,8 @@ class MLModelUploadForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['model_file'].widget.attrs['accept'] = '.h5,.pkl,.joblib,*' 
+
+class PredictionRecordForm(forms.ModelForm):
+    class Meta:
+        model = PredictionRecord
+        fields = '__all__'  # or specify the fields you want to allow editing 

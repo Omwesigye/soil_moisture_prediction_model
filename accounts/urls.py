@@ -28,4 +28,5 @@ urlpatterns = [
     path('verify_reset_code/', views.verify_reset_code, name='verify_reset_code'),
     path('set_new_password/', views.set_new_password, name='set_new_password'),
     path('alerts/mark_read/<int:alert_id>/', views.mark_alert_read, name='mark_alert_read'),
+    path('prediction/<int:pk>/delete/', views.delete_prediction, name='delete_prediction'),
 ] 

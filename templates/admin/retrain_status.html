@@ -3,10 +3,22 @@
   <h2>Retrain Status</h2>
   <p>Status: <strong>{{ status }}</strong></p>
   {% if status == "SUCCESS" %}
+    <h3 style="color:green;">Retraining completed successfully!</h3>
     <h3>Logs:</h3>
     <pre>{{ result.stdout }}</pre>
     <pre style="color:red;">{{ result.stderr }}</pre>
     <div>Return code: {{ result.returncode }}</div>
+    {% if result.stdout and 'New model ID:' in result.stdout %}
+      {% with result.stdout|cut:'\r'|linebreaksbr as lines %}
+        {% for line in lines.split('<br />') %}
+          {% if 'New model ID:' in line %}
+            {% with line|slice:'-10:' as model_id %}
+              <div><a href="/admin/accounts/mlmodel/{{ model_id }}/change/">View new model in admin</a></div>
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
+    {% endif %}
   {% elif status == "FAILURE" %}
     <h3 style="color:red;">Task failed!</h3>
     <pre>{{ result }}</pre>

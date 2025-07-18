@@ -61,9 +61,8 @@
 {% else %}
     <div style="max-width: 500px; margin: 2em auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 2rem; text-align:center;">
         <h3>Single Prediction</h3>
-        <p><strong>Predicted Moisture:</strong> {{ prediction|floatformat:2 }}</p>
-        <p><strong>Status:</strong> {{ status }}</p>
-        <p><strong>Recommendation:</strong> {{ recommendation }}</p>
+        <p><strong>Predicted Moisture:</strong> {{ predicted_moisture|floatformat:2 }}%</p>
+        <p><strong>Irrigation Action:</strong> {{ irrigation_action }}</p>
     </div>
 {% endif %}
 <div style="text-align:center; margin-top:2em;">

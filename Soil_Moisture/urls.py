@@ -15,12 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import custom_admin_login, user_logout
+from accounts.views import custom_admin_login, admin_logout
 from accounts.admin import custom_admin_site
 
 urlpatterns = [
     path('admin/login/', custom_admin_login, name='custom_admin_login'),
-    path('admin/logout/', user_logout, name='admin_logout'),
+    path('admin/logout/', admin_logout, name='admin_logout'),
     path('admin/', custom_admin_site.urls),
     # path('admin/', admin.site.urls),  # Remove or comment out the default admin
     path('', include('accounts.urls')),

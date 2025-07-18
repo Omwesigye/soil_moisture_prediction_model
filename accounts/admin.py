@@ -22,9 +22,10 @@ class CustomAdminSite(AdminSite):
     def index(self, request, extra_context=None):
         total_predictions = PredictionRecord.objects.count()
         active_farmers = CustomUser.objects.filter(role='farmer', is_active=True).count()
-        critical_alerts = PredictionRecord.objects.filter(status__icontains='Critical').count()
         num_technicians = CustomUser.objects.filter(role='technician', is_active=True).count()
         num_models = MLModel.objects.count()
+        # Add critical_alerts using recommendation as proxy
+        critical_alerts = PredictionRecord.objects.filter(recommendation='Irrigate').count()
         recent_predictions = PredictionRecord.objects.select_related('user').order_by('-created_at')[:5]
         if extra_context is None:
             extra_context = {}
@@ -67,10 +68,11 @@ class MLModelAdmin(admin.ModelAdmin):
     retrain_link.allow_tags = True
 
     def retrain_model_view(self, request, model_id):
+        import os
         model = MLModel.objects.get(id=model_id)
-        data_path = 'ml_models/training_data.csv'  # Update as needed
-        output_path = model.model_file.path
-        task = retrain_model_task.delay(model.id, data_path, output_path)
+        data_path = 'ml_models/cleaned_soil_moisture_dataset.csv'  # Update as needed
+        output_dir = os.path.dirname(model.model_file.path)
+        task = retrain_model_task.delay(model.id, data_path, output_dir)
         messages.success(
             request,
             f'Retraining started for model "{model.name}". '
@@ -90,10 +92,11 @@ class MLModelAdmin(admin.ModelAdmin):
         return render(request, 'admin/retrain_status.html', context)
 
     def retrain_selected_models(self, request, queryset):
+        import os
         for model in queryset:
             data_path = 'ml_models/training_data.csv'
-            output_path = model.model_file.path
-            retrain_model_task.delay(model.id, data_path, output_path)
+            output_dir = os.path.dirname(model.model_file.path)
+            retrain_model_task.delay(model.id, data_path, output_dir)
         self.message_user(request, "Retraining started for selected models.")
     retrain_selected_models.short_description = "Retrain selected models"
 

@@ -15,6 +15,10 @@
         .actions { text-align: center; margin-bottom: 2em; }
         .btn { display: inline-block; margin: 0 0.5em; padding: 0.7em 2em; background: #7bb661; color: #fff; border: none; border-radius: 6px; font-size: 1.1em; text-decoration: none; transition: background 0.2s; }
         .btn:hover { background: #5e944c; }
+        .btn-sm {
+            padding: 0.3em 1em;
+            font-size: 0.95em;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +77,9 @@
     </nav>
     <div class="container">
         <h2>Your Prediction History</h2>
+        <div style="text-align:right; margin-bottom:1em;">
+            <button class="btn" onclick="window.print()">Print This Page</button>
+        </div>
         <form method="get" style="margin-bottom:2em; display:flex; flex-wrap:wrap; gap:1.5em; align-items:center; justify-content:center; background:#f4f1ee; padding:1em 1.5em; border-radius:10px;">
             <div>
                 <label for="start_date" style="color:#6b5e3c; font-weight:bold;">Start Date:</label>
@@ -81,15 +88,6 @@
             <div>
                 <label for="end_date" style="color:#6b5e3c; font-weight:bold;">End Date:</label>
                 <input type="date" id="end_date" name="end_date" value="{{ end_date }}" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
-            </div>
-            <div>
-                <label for="status" style="color:#6b5e3c; font-weight:bold;">Status:</label>
-                <select id="status" name="status" style="padding:0.4em; border-radius:6px; border:1px solid #bdbdbd;">
-                    <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
-                    {% for s in all_statuses %}
-                        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
-                    {% endfor %}
-                </select>
             </div>
             <div>
                 <label for="recommendation" style="color:#6b5e3c; font-weight:bold;">Recommendation:</label>
@@ -129,8 +127,8 @@
                     <th>Weekday</th>
                     <th>Location</th>
                     <th>Predicted Moisture</th>
-                    <th>Status</th>
                     <th>Recommendation</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -146,8 +144,13 @@
                     <td>{{ rec.weekday }}</td>
                     <td>{{ rec.location_encoded }}</td>
                     <td>{{ rec.predicted_moisture|floatformat:2 }}</td>
-                    <td>{{ rec.status }}</td>
                     <td>{{ rec.recommendation }}</td>
+                    <td>
+                        <form action="{% url 'delete_prediction' rec.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this prediction?');">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

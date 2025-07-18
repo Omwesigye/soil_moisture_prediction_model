@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import pymysql
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -84,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'soil_moisture',
         'USER': 'django_user',
-        'PASSWORD': '',
+        'PASSWORD': '@Collin2023',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
@@ -153,8 +154,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'omwesigyeseezi5@gmail.com'
+EMAIL_HOST_PASSWORD = 'qybu rdif wphj gkco'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 TWILIO_ACCOUNT_SID = 'your_account_sid'
@@ -187,9 +188,13 @@ JAZZMIN_SETTINGS = {
 
     # Custom links in the user menu
     "usermenu_links": [
-        {"name": "Profile", "url": "/admin/accounts/customuser/", "icon": "fas fa-user-cog"},
-        {"name": "Logout", "url": "/admin/logout/", "icon": "fas fa-sign-out-alt"},
+        {
+            "name": "Profile",
+            "url": "/admin/accounts/customuser/{user.id}/change/",
+            "icon": "fas fa-user-cog"
+        },
     ],
+    "show_usermenu_profile": False,
 
     # Custom dashboard cards (Jazzmin doesn't support widgets out of the box, but you can use custom templates)
     "custom_links": {
@@ -206,3 +211,5 @@ JAZZMIN_SETTINGS = {
     # Change the default theme
     "theme": "minty",
 }
+
+MEDIA_ROOT = BASE_DIR / 'media'

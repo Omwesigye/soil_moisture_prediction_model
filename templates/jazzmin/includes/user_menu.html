@@ -1,0 +1,31 @@
+{% load static %}
+<li class="nav-item dropdown" style="position: relative;">
+    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{ user.email }}">
+        <i class="far fa-user" aria-hidden="true"></i>
+    </a>
+    <div class="dropdown-menu dropdown-menu-right show-on-top" aria-labelledby="userDropdown" id="jazzy-usermenu" style="z-index: 9999;">
+        <span class="dropdown-header">Account</span>
+        <div class="dropdown-divider"></div>
+        <a href="{% url 'admin:accounts_customuser_change' user.id %}" class="dropdown-item">
+            <i class="fas fa-user-cog mr-2"></i> Profile
+        </a>
+        <div class="dropdown-divider"></div>
+        <form id="logout-form" method="post" action="{% url 'admin_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt mr-2"></i> Log out</button>
+        </form>
+    </div>
+</li>
+<script>
+// Ensure Bootstrap dropdowns are enabled
+if (window.jQuery && typeof jQuery.fn.dropdown === 'function') {
+    jQuery(function($) {
+        $('#userDropdown').dropdown();
+    });
+}
+</script>
+<style>
+.show-on-top {
+    z-index: 9999 !important;
+}
+</style> 
