@@ -1,6 +1,6 @@
 # Ignore virtual environment
 env/
-
+myvenv/
 # Ignore model files
 *.keras
 *.pkl

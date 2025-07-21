@@ -85,11 +85,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'soil_moisture',
         'USER': 'django_user',
-        'PASSWORD': '@Collin2023',
+        'PASSWORD': '@Renitah2023',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES', innodb_strict_mode=1",  
+            #'init_command': "SET sql_mode='STRICT_TRANS_TABLES', innodb_strict_mode=1",  
             'charset': 'utf8',
         },
     }
