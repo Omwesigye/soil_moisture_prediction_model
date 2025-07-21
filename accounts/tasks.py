@@ -1,19 +1,19 @@
 import os
 import sys
 import subprocess
-from celery import shared_task
-from django.conf import settings
+from celery import shared_task # type: ignore
+from django.conf import settings # type: ignore
 from accounts.models import MLModel
-from django.core.files import File
-from django.utils import timezone
+from django.core.files import File # type: ignore
+from django.utils import timezone # type: ignore
 from datetime import datetime
 
 @shared_task
 def retrain_model_task(model_id, data_path=None, model_dir=None, model_name=None):
     # Hardcoded paths as per user request
     script_path = os.path.join(settings.BASE_DIR, 'ml_models', 'train_model.py')
-    data_path = r'C:\Users\User\OneDrive\Desktop\RECESS PROJECT\ml_models\cleaned_soil_moisture_dataset.csv'
-    model_path = r'C:\Users\User\OneDrive\Desktop\RECESS PROJECT\ml_models\soil_moisture_model.keras'
+    data_path = r'C:\Users\Renitah\Desktop\Soil Moisture\soil_moisture_prediction_model\ml_models\cleaned_soil_moisture_dataset.csv'
+    model_path = r'C:\Users\Renitah\Desktop\Soil Moisture\soil_moisture_prediction_model\ml_models\soil_moisture_model.keras'
     feature_scaler_path = os.path.join(settings.BASE_DIR, 'ml_models', 'feature_scaler.pkl')
     moisture_scaler_path = os.path.join(settings.BASE_DIR, 'ml_models', 'moisture_scaler.pkl')
     action_encoder_path = os.path.join(settings.BASE_DIR, 'ml_models', 'action_encoder.pkl')
@@ -34,8 +34,8 @@ def retrain_model_task(model_id, data_path=None, model_dir=None, model_name=None
 
     try:
         from accounts.models import MLModel
-        from django.core.files import File
-        from django.utils import timezone
+        from django.core.files import File # type: ignore
+        from django.utils import timezone # type: ignore
         model_obj = MLModel(
             name=os.path.basename(model_path),
             is_active=True,

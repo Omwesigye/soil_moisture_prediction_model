@@ -3,21 +3,21 @@ import os
 import pandas as pd
 import pickle
 import numpy as np
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
+from tensorflow.keras.models import Model # type: ignore
+from tensorflow.keras.layers import Input, Dense # type: ignore
+from tensorflow.keras.utils import to_categorical # type: ignore
+from tensorflow.keras.optimizers import Adam # type: ignore
+from tensorflow.keras.callbacks import EarlyStopping # type: ignore
+from sklearn.model_selection import train_test_split # type: ignore
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler # type: ignore
 import traceback
 
 # Get MEDIA_ROOT from Django settings
-import django
+import django # type: ignore
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Soil_Moisture.settings')
 django.setup()
-from django.conf import settings
+from django.conf import settings # type: ignore
 ml_models_dir = os.path.join(settings.BASE_DIR, 'ml_models')  # Always use BASE_DIR/ml_models
 
 
